@@ -1,9 +1,0 @@
-fastapi
-uvicorn
-pymupdf
-python-multipart
-jinja2
-sarvamai
-python-dotenv
-pytesseract
-pillow
