@@ -1,6 +1,6 @@
-from sentence_transformers import SentenceTransformer
+import asyncio
 
-model = SentenceTransformer("all-MiniLM-L6-v2")
+from core.services.storage.embedding_service import EmbeddingService, index_embeddings
 
 
 def chunk_text(text, chunk_size=500, overlap=100):
@@ -13,14 +13,22 @@ def chunk_text(text, chunk_size=500, overlap=100):
         i += chunk_size - overlap
     return chunks
 
-chunks = [] 
-text = ""
-with open("totalBook.txt", "r") as f:
-    text = f.read()
 
-chunks = chunk_text(text)
+async def main():
+    text = ""
+    with open("totalBook.txt", "r") as f:
+        text = f.read()
 
-embeddings = model.encode(chunks)
+    chunks = chunk_text(text)
 
-print(embeddings)
-print(embeddings.shape)
+    embedder = EmbeddingService()
+    embeddings = await embedder.get_embeddings(chunks)
+
+    print(f"chunks: {len(chunks)}")
+    print(f"embedding_dim: {len(embeddings[0]) if embeddings else 0}")
+
+    index_embeddings(chunks, embeddings)
+
+
+if __name__ == "__main__":
+    asyncio.run(main())
