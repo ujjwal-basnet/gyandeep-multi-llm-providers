@@ -8,9 +8,10 @@ GyanDeep is an AI learning platform for Nepali high‑school students. It lets s
 - Whole‑book embeddings stored in Postgres + pgvector
 - Chat UI with streamed responses and a separate “Thinking” panel
 - Multi‑book catalog with persisted metadata
-- ⚡ **Rust-Accelerated Batching**: Document chunking and pgvector serialization are processed in Rust (via PyO3/Rayon) for massive parallel performance.
-- 📄 **Parallel OCR**: Tesseract operates concurrently to quickly parse entirely textless textbook pages.
-- ✨ **Demo Mode**: Automatically falls back to raw text extraction if `SARVAMAI_KEY` is not provided.
+- **Rust-Accelerated Batching**: Document chunking and pgvector serialization are processed in Rust (via PyO3/Rayon) for massive parallel performance.
+- **Parallel OCR**: Tesseract operates concurrently to quickly parse entirely textless textbook pages.
+- **Demo Mode**: Automatically falls back to raw text extraction if `SARVAMAI_KEY` is not provided.
+
 
 ## Requirements
 - Python 3.11+ (3.12 works)
