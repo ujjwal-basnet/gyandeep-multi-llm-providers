@@ -3,6 +3,8 @@ import pytest
 pytest.importorskip("jinja2")
 from fastapi.testclient import TestClient
 
+from fastapi.testclient import TestClient
+
 from dashboard.backend import app as dashboard_app
 
 
@@ -81,3 +83,37 @@ def test_create_plugin_job_rejects_unknown_plugin():
     response = client.post("/api/plugins/jobs", json={"plugin_id": "does_not_exist", "query": "animate this"})
     assert response.status_code == 400
     assert "Unknown plugin" in response.text
+def test_ask_returns_config_error_before_env_context_build(monkeypatch):
+    class DummyInference:
+        def is_configured(self) -> bool:
+            return False
+
+    def _should_not_run(_page_index: int):
+        raise AssertionError("Environment context should not be built when API key is missing.")
+
+    old_state = dashboard_app.global_pdf_data.copy()
+    dashboard_app.global_pdf_data.update(
+        {
+            "filename": "test.pdf",
+            "filepath": "dashboard/uploads/test.pdf",
+            "total_pages": 10,
+            "pages": {},
+            "book_id": None,
+        }
+    )
+
+    monkeypatch.setattr(dashboard_app, "inference_service", DummyInference())
+    monkeypatch.setattr(dashboard_app, "_build_env_context", _should_not_run)
+
+    try:
+        client = TestClient(dashboard_app.app)
+        response = client.post(
+            "/api/ask",
+            json={"query": "hello", "mode": "environment", "current_page": 1},
+        )
+    finally:
+        dashboard_app.global_pdf_data.clear()
+        dashboard_app.global_pdf_data.update(old_state)
+
+    assert response.status_code == 200
+    assert dashboard_app.ERR_SARVAM_NOT_CONFIGURED in response.text

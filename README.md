@@ -16,6 +16,10 @@ GyanDeep is an AI learning platform for Nepali high‑school students. It lets s
 - Tesseract OCR installed and available in `PATH`
 - (macOS) `brew install tesseract`
 - Optional for animation rendering: Manim CE + LaTeX + ffmpeg
+  - macOS: `brew install tesseract`
+  - Arch Linux: `sudo pacman -S tesseract tesseract-data-eng`
+  - Ubuntu/Debian: `sudo apt-get install tesseract-ocr tesseract-data-eng`
+- Rust Toolchain *(to compile the high-performance Rust extension during install)*
 
 ## Quick Start
 1. Create and activate a virtual environment.
@@ -23,16 +27,21 @@ GyanDeep is an AI learning platform for Nepali high‑school students. It lets s
    ```bash
    pip install -r requirements.txt
    ```
-3. Create `.env` from the example and add your API key:
+3. Build the lightning-fast Rust extension in release mode:
+   ```bash
+   pip install maturin
+   maturin develop --release -m rust/Cargo.toml
+   ```
+4. Create `.env` from the example and add your API key:
    ```bash
    cp .env.example .env
-   # then edit .env and set SARVAMAI_KEY=...
+   # Edit .env and set SARVAMAI_KEY=...
    ```
-4. Start services (DB + app):
+5. Start services (DB + app):
    ```bash
    ./start_services.sh
    ```
-5. Open the app at [http://localhost:8000](http://localhost:8000).
+6. Open the app at [http://localhost:8000](http://localhost:8000).
 
 ## How It Works
 - **Upload** a PDF from the dashboard.
@@ -59,7 +68,7 @@ python -m core.services.ingestion.embedding_pipeline totalBook.txt --source "gra
 
 ## Configuration
 See `.env.example` for all settings. Common ones:
-- `SARVAMAI_KEY` – required for chat responses
+- `SARVAMAI_KEY` – required for intelligent chat responses
 - `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD`, `DB_NAME`
 - `PRECOMPUTE_OCR_ON_UPLOAD` (default: true)
 - `PRECOMPUTE_EMBEDDINGS_ON_UPLOAD` (default: true)

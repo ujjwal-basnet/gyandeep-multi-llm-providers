@@ -6,6 +6,13 @@ import asyncio
 from dataclasses import dataclass
 from typing import Iterable, List, Sequence
 
+try:
+    from gyandeep_rs import vectors_to_pg_literals as _rs_vec_literals
+    from gyandeep_rs import truncate_texts as _rs_truncate
+    _HAS_RUST = True
+except ImportError:
+    _HAS_RUST = False
+
 
 def _load_dotenv_if_available() -> None:
     try:
@@ -64,7 +71,10 @@ class EmbeddingService:
         single_input = isinstance(texts, str)
         texts = [texts] if single_input else list(texts)
 
-        texts = [self._truncate_text(text) for text in texts]
+        if _HAS_RUST:
+            texts = _rs_truncate(texts, self.config.max_chars)
+        else:
+            texts = [self._truncate_text(t) for t in texts]
 
         if self.config.embedding_provider == "openai":
             all_embeddings = await self._get_openai_embeddings(texts)
@@ -232,10 +242,18 @@ def index_embeddings(
             if ensure_schema:
                 cur.execute(create_schema_sql)
 
-            records = []
-            for idx, chunk in enumerate(chunks):
-                vector_literal = "[" + ",".join(f"{v:.6f}" for v in embeddings[idx]) + "]"
-                records.append((source, idx, chunk, vector_literal))
+            if _HAS_RUST:
+                pg_literals = _rs_vec_literals([list(embeddings[i]) for i in range(len(chunks))])
+            else:
+                pg_literals = [
+                    "[" + ",".join(f"{v:.6f}" for v in embeddings[i]) + "]"
+                    for i in range(len(chunks))
+                ]
+
+            records = [
+                (source, idx, chunk, pg_literals[idx])
+                for idx, chunk in enumerate(chunks)
+            ]
 
             execute_values(
                 cur,

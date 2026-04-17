@@ -1,7 +1,12 @@
 .env
 venv
+.venv
 dashboard/uploads/
 dashboard/data/
 .DS_Store
 __pycache__/
 *.pyc
+*.pyo
+.pytest_cache/
+rust/target/
+rust/Cargo.lock
