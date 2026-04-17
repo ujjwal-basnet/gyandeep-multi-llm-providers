@@ -8,13 +8,14 @@ GyanDeep is an AI learning platform for Nepali high‑school students. It lets s
 - Whole‑book embeddings stored in Postgres + pgvector
 - Chat UI with streamed responses and a separate “Thinking” panel
 - Multi‑book catalog with persisted metadata
-- **Rust-Accelerated Batching**: Document chunking and pgvector serialization are processed in Rust (via PyO3/Rayon) for massive parallel performance.
-- **Parallel OCR**: Tesseract operates concurrently to quickly parse entirely textless textbook pages.
+- Animation generation via Manim plugin jobs (script + MP4 artifacts)
 
 ## Requirements
 - Python 3.11+ (3.12 works)
 - Docker + Docker Compose
 - Tesseract OCR installed and available in `PATH`
+- (macOS) `brew install tesseract`
+- Optional for animation rendering: Manim CE + LaTeX + ffmpeg
   - macOS: `brew install tesseract`
   - Arch Linux: `sudo pacman -S tesseract tesseract-data-eng`
   - Ubuntu/Debian: `sudo apt-get install tesseract-ocr tesseract-data-eng`
@@ -49,6 +50,10 @@ GyanDeep is an AI learning platform for Nepali high‑school students. It lets s
 - **Ask** a question:
   - *Current page mode* builds a structured (paraphrased) summary of ±5 pages for cleaner context.
   - *Whole book mode* retrieves top‑K chunks from pgvector.
+- **Animate** from the chat area:
+  - Click **Animate** to create an async plugin job.
+  - Job progress is logged in chat.
+  - On success, the app returns links to the generated `script.py` and rendered `lesson.mp4`.
 
 ## Ingestion Scripts
 The one‑off ingestion utilities live under `core/services/ingestion`:
@@ -69,6 +74,8 @@ See `.env.example` for all settings. Common ones:
 - `PRECOMPUTE_EMBEDDINGS_ON_UPLOAD` (default: true)
 - `EMBEDDING_PROVIDER` (`sentence_transformers` or `openai`)
 - `EMBEDDING_MODEL_NAME` (default: `all-MiniLM-L6-v2`)
+- `ANIMATION_CONTEXT_MAX_CHARS` (default: `9000`)
+- `ANIMATION_RENDER_TIMEOUT_SECONDS` (default: `180`)
 
 ## Troubleshooting
 - **DB auth errors**: ensure `.env` has `DB_PASSWORD` and the docker service matches it. If you changed it, remove the old volume and restart:
@@ -85,6 +92,7 @@ See `.env.example` for all settings. Common ones:
 - `core/agents` – prompt + context managers (agent-ready)
 - `core/services/ingestion` – OCR + embedding utilities
 - `core/services/inference` – AI inference wrapper (model calls + parsing)
+- `core/services/plugins` – plugin runtime + Manim animation plugin
 - `core/services/storage` – schema + pgvector helpers
 - `tests/` – unit tests
 
