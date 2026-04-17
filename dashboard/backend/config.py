@@ -63,7 +63,6 @@ DEFAULT_ANALYSIS_MESSAGE = "No analysis has been generated yet."
 API_EMPTY_RESPONSE_MESSAGE = "No response content returned by the API."
 
 ERR_SARVAM_NOT_CONFIGURED = "Sarvam API not configured. Please set SARVAMAI_KEY."
-ALLOW_NO_KEY_DEMO = os.getenv("ALLOW_NO_KEY_DEMO", "true").lower() in {"1", "true", "yes"}
 ERR_NO_PDF_UPLOADED = "No PDF uploaded yet."
 ERR_NO_CONTEXT = "No analysis context found. Generate it first."
 

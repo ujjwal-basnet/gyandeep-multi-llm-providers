@@ -39,7 +39,6 @@ from .config import (
     SERVER_PORT,
     SSE_MEDIA_TYPE,
     ERR_SARVAM_NOT_CONFIGURED,
-    ALLOW_NO_KEY_DEMO,
     ERR_NO_PDF_UPLOADED,
     ERR_NO_CONTEXT,
     PRECOMPUTE_OCR_ON_UPLOAD,
@@ -536,7 +535,7 @@ async def analyze_env(request: Request):
     Runs an analysis over the local environment (+/- 5 pages),
     and asks Sarvam to create a high-level summary of this section.
     """
-    if not inference_service.is_configured() and not ALLOW_NO_KEY_DEMO:
+    if not inference_service.is_configured():
         raise HTTPException(status_code=503, detail=ERR_SARVAM_NOT_CONFIGURED)
         
     data = await request.json()
@@ -548,16 +547,7 @@ async def analyze_env(request: Request):
         raise HTTPException(status_code=400, detail=ERR_NO_PDF_UPLOADED)
         
     try:
-        if inference_service.is_configured():
-            analysis_result, raw_text = await _build_env_context(current_page)
-        else:
-            raw_text = await build_context(current_page, window=CONTEXT_WINDOW)
-            if not raw_text.strip():
-                raise HTTPException(status_code=400, detail="No text found in this context window.")
-            analysis_result = (
-                "Demo mode active (no SARVAMAI_KEY). Showing extracted context only.\n\n"
-                + raw_text
-            )
+        analysis_result, raw_text = await _build_env_context(current_page)
         if not raw_text.strip():
             raise HTTPException(status_code=400, detail="No text found in this context window.")
 
@@ -575,7 +565,7 @@ async def analyze_global():
     Runs an analysis over the ENTIRE PDF using concurrent OCR,
     and then asks Sarvam AI for synthetic data conversion into context.txt.
     """
-    if not inference_service.is_configured() and not ALLOW_NO_KEY_DEMO:
+    if not inference_service.is_configured():
         raise HTTPException(status_code=503, detail=ERR_SARVAM_NOT_CONFIGURED)
 
     global global_pdf_data
@@ -605,20 +595,13 @@ async def analyze_global():
             if not extracted_text.strip():
                 continue
                 
-            if inference_service.is_configured():
-                analysis_result = await context_manager.build_global_chunk_summary(
-                    extracted_text,
-                    page_start=i + 1,
-                    page_end=chunk_end,
-                )
-                if not analysis_result:
-                    analysis_result = API_EMPTY_RESPONSE_MESSAGE
-            else:
-                analysis_result = (
-                    "Demo mode active (no SARVAMAI_KEY). "
-                    "Showing extracted text chunk instead of model summary.\n\n"
-                    + extracted_text
-                )
+            analysis_result = await context_manager.build_global_chunk_summary(
+                extracted_text,
+                page_start=i + 1,
+                page_end=chunk_end,
+            )
+            if not analysis_result:
+                analysis_result = API_EMPTY_RESPONSE_MESSAGE
             
             with open(GLOBAL_CONTEXT_FILE, "a", encoding="utf-8") as f:
                 f.write(f"\n\n--- Analysis for Pages {i+1} to {chunk_end} ---\n\n")
@@ -698,25 +681,10 @@ async def ask_question(request: Request):
     user_prompt = f"Question: {query}"
 
     if not inference_service.is_configured():
-        if not ALLOW_NO_KEY_DEMO:
-            async def stream_error():
-                yield f"data: {json.dumps({'error': ERR_SARVAM_NOT_CONFIGURED})}\n\n"
-                yield "event: end\ndata: {}\n\n"
-            return StreamingResponse(stream_error(), media_type=SSE_MEDIA_TYPE)
-
-        async def stream_demo_response():
-            demo_answer = (
-                "Demo mode active (no SARVAMAI_KEY). "
-                "I cannot generate model answers yet, but here is the most relevant extracted context.\n\n"
-                f"Question: {query}\n\n"
-                + (file_context[:6000] if file_context else "No context available.")
-            )
-            for chunk in _stream_text_chunks(demo_answer, size=80):
-                yield f"data: {json.dumps({'content': chunk})}\n\n"
-                await asyncio.sleep(0.02)
+        async def stream_error():
+            yield f"data: {json.dumps({'error': ERR_SARVAM_NOT_CONFIGURED})}\n\n"
             yield "event: end\ndata: {}\n\n"
-
-        return StreamingResponse(stream_demo_response(), media_type=SSE_MEDIA_TYPE)
+        return StreamingResponse(stream_error(), media_type=SSE_MEDIA_TYPE)
 
     async def single_chunk_response():
         try:

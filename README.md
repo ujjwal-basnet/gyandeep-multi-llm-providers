@@ -10,8 +10,6 @@ GyanDeep is an AI learning platform for Nepali high‑school students. It lets s
 - Multi‑book catalog with persisted metadata
 - **Rust-Accelerated Batching**: Document chunking and pgvector serialization are processed in Rust (via PyO3/Rayon) for massive parallel performance.
 - **Parallel OCR**: Tesseract operates concurrently to quickly parse entirely textless textbook pages.
-- **Demo Mode**: Automatically falls back to raw text extraction if `SARVAMAI_KEY` is not provided.
-
 
 ## Requirements
 - Python 3.11+ (3.12 works)
@@ -28,16 +26,15 @@ GyanDeep is an AI learning platform for Nepali high‑school students. It lets s
    ```bash
    pip install -r requirements.txt
    ```
-3. Build the lightning-fast Rust extension (`gyandeep_rs`) in release mode:
+3. Build the lightning-fast Rust extension in release mode:
    ```bash
    pip install maturin
-   maturin develop --release -m gyandeep_rs/Cargo.toml
+   maturin develop --release -m rust/Cargo.toml
    ```
 4. Create `.env` from the example and add your API key:
    ```bash
    cp .env.example .env
    # Edit .env and set SARVAMAI_KEY=...
-   # Note: If no key is set, the app will run in Demo Mode using extracted text fallback.
    ```
 5. Start services (DB + app):
    ```bash
@@ -66,8 +63,7 @@ python -m core.services.ingestion.embedding_pipeline totalBook.txt --source "gra
 
 ## Configuration
 See `.env.example` for all settings. Common ones:
-- `SARVAMAI_KEY` – required for intelligent chat responses (bypassed if `ALLOW_NO_KEY_DEMO=true`)
-- `ALLOW_NO_KEY_DEMO` (default: true) – fallbacks to raw text extraction context if no key is given.
+- `SARVAMAI_KEY` – required for intelligent chat responses
 - `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD`, `DB_NAME`
 - `PRECOMPUTE_OCR_ON_UPLOAD` (default: true)
 - `PRECOMPUTE_EMBEDDINGS_ON_UPLOAD` (default: true)
