@@ -11,10 +11,10 @@ def extract_think_and_final(text: str) -> tuple[str, str]:
 
     # 1. Handle <tool_call> tags (treat as thinking)
     if "<tool_call>" in lower:
-        tool_call_match = re.search(r"<tool_call>(.*?)</tool_call>", text, flags=re.IGNORECASE | re.DOTALL)
-        if tool_call_match:
-            think_text = tool_call_match.group(1).strip()
-            final_text = re.sub(r"<tool_call>.*?</tool_call>", "", text, flags=re.IGNORECASE | re.DOTALL, count=1)
+        tool_call_texts = re.findall(r"<tool_call>(.*?)</tool_call>", text, flags=re.IGNORECASE | re.DOTALL)
+        if tool_call_texts:
+            think_text = "\n\n".join(t.strip() for t in tool_call_texts if t.strip())
+            final_text = re.sub(r"<tool_call>.*?</tool_call>", "", text, flags=re.IGNORECASE | re.DOTALL)
 
     # 2. Handle <think> tags (without 'ing')
     if "<think>" in lower:
