@@ -64,6 +64,24 @@ def test_extract_think_and_final():
     assert thinking == "plan"
 
 
+def test_extract_think_and_final_multiple_tool_calls_before_final():
+    from core.services.inference.utils import extract_think_and_final
+    content, thinking = extract_think_and_final(
+        "<tool_call>one</tool_call>\n<tool_call>two</tool_call>\n<final>Answer.</final>"
+    )
+    assert content == "Answer."
+    assert thinking == "one\n\ntwo"
+
+
+def test_extract_think_and_final_multiple_tool_calls_without_final():
+    from core.services.inference.utils import extract_think_and_final
+    content, thinking = extract_think_and_final(
+        "<tool_call>one</tool_call>\n<tool_call>two</tool_call>\nResult"
+    )
+    assert content == "Result"
+    assert thinking == "one\n\ntwo"
+
+
 def test_litellm_model_string_ollama():
     with patch.dict("sys.modules", {"litellm": MagicMock()}):
         from core.services.inference.providers.litellm import LiteLLMProvider
